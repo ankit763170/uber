@@ -5,7 +5,8 @@ const express = require("express");
 // const helmet = require("helmet");
 // const morgan = require("morgan");
 const app = express();
-
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
 // Middleware
 // app.use(helmet()); // Secure HTTP headers
 app.use(cors()); // Enable CORS

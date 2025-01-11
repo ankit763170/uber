@@ -3,6 +3,7 @@ const UserModel = require("../models/user-model");
 const userservice = require("../services/user.service");
 const { validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
+const blacklistTokenSchema = require("../models/blacklistToken.model");
 
 const registerUser = async (req, res, next) => {
   // Validate request body
@@ -45,4 +46,52 @@ const registerUser = async (req, res, next) => {
     });
   }
 };
-module.exports = { registerUser };
+
+const loginUser = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const { email, password } = req.body;
+    const user = await UserModel.findOne({ email }).select("+password");
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    const token = user.generateAuthToken();
+    res.cookie("token", token, {
+      httpOnly: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+    res.status(200).json({ user, token });
+  } catch (error) {
+    console.error("Error in loginuser :", error);
+  }
+};
+
+const getuserProfile = async (req, res, next) => {
+  return res.status(201).json(req.user);
+};
+
+const logoutUser = async (req, res, next) => {
+  try {
+    res.clearCookie("token");
+    const token = req.cookies.token || req.header.authorization.split(" ")[1];
+    await blacklistTokenSchema.create({
+      token,
+    });
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Error in logoutUser :", error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred while logging out" });
+  }
+};
+
+module.exports = { registerUser, loginUser, getuserProfile, logoutUser };
