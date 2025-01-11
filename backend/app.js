@@ -13,10 +13,11 @@ app.use(cors()); // Enable CORS
 // app.use(morgan("dev")); // Logging
 app.use(express.json({ limit: "10kb" })); // Parse JSON with size limit
 app.use(express.urlencoded({ extended: true, limit: "10kb" })); // Parse URL-encoded data
-
+const captainRoutes = require("./routes/captain.routes");
 // Routes
-const usersf = require("./routes/user.routes");
-app.use("/users", usersf);
+const users = require("./routes/user.routes");
+app.use("/users", users);
+app.use("/captains", captainRoutes);
 
 // Default route
 app.get("/", (req, res) => {

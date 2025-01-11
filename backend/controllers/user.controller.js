@@ -15,7 +15,14 @@ const registerUser = async (req, res, next) => {
   try {
     // Extract data from request body
     const { fullname, email, password } = req.body;
-
+    const isuserexist = await UserModel.findOne({
+      email: req.body.email,
+    });
+    if (isuserexist) {
+      return res.status(400).json({
+        message: "user already exist with this email",
+      });
+    }
     // Hash the password
     const hashedpassword = await bcrypt.hash(password, 10);
 
